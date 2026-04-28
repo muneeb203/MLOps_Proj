@@ -1,0 +1,72 @@
+project:
+  name: "mlops-predictive-maintenance"
+  version: "1.0.0"
+  description: "Empirical comparison of drift detection methods for sensor anomaly detection"
+
+data:
+  raw_path: "data/raw/pump_sensor_data.csv"
+  processed_path: "data/processed/processed_data.pkl"
+  drift_simulation_path: "data/drift_simulation/"
+  test_size: 0.2
+  val_size: 0.1
+  random_seed: 42
+  target_column: "machine_status"
+  drop_columns: ["Unnamed: 0", "timestamp"]
+  normal_label: "NORMAL"
+  anomaly_labels: ["BROKEN", "RECOVERING"]
+
+model:
+  type: "IsolationForest"
+  contamination: 0.05
+  n_estimators: 100
+  random_state: 42
+  model_path: "models/anomaly_detector.pkl"
+  scaler_path: "models/scaler.pkl"
+
+mlflow:
+  tracking_uri: "sqlite:///mlflow_tracking/mlflow.db"
+  experiment_name: "predictive-maintenance-drift-detection"
+  artifact_location: "mlflow_tracking/artifacts"
+
+drift_detection:
+  reference_window_size: 1000
+  detection_window_size: 200
+  methods:
+    adwin:
+      delta: 0.002
+    ddm:
+      min_num_instances: 30
+      warning_level: 2.0
+      drift_level: 3.0
+    kswin:
+      alpha: 0.005
+      window_size: 100
+      stat_size: 30
+    page_hinkley:
+      min_instances: 30
+      delta: 0.005
+      threshold: 50
+      alpha: 0.9999
+    ks_test:
+      alpha: 0.05
+      window_size: 200
+    psi:
+      buckets: 10
+      threshold: 0.2
+      window_size: 200
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+
+monitoring:
+  prometheus_port: 8001
+  metrics_prefix: "predictive_maintenance"
+
+aws:
+  region: "us-east-1"
+  ecr_repository: "mlops-predictive-maintenance"
+  ecs_cluster: "mlops-cluster"
+  ecs_service: "predictive-maintenance-service"
+  task_definition: "predictive-maintenance-task"
