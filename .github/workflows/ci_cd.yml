@@ -34,6 +34,8 @@ jobs:
 
       - name: Run tests
         run: pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
+        env:
+          PYTHONPATH: ${{ github.workspace }}
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
@@ -46,7 +48,7 @@ jobs:
     name: Build & Push to ECR
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/main' && secrets.AWS_ACCESS_KEY_ID != ''
+    if: github.ref == 'refs/heads/main' && vars.AWS_DEPLOY == 'true'
     outputs:
       image: ${{ steps.build-image.outputs.image }}
 
@@ -116,7 +118,7 @@ jobs:
     name: Deploy to AWS ECS
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main' && secrets.AWS_ACCESS_KEY_ID != ''
+    if: github.ref == 'refs/heads/main' && vars.AWS_DEPLOY == 'true'
 
     steps:
       - uses: actions/checkout@v4
